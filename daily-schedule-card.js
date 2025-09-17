@@ -20,12 +20,12 @@ set hass(hass) {
             card.header = this._config.title;
             this._content.classList.add("card-content");
             card.appendChild(this._content);
-            // Apply modern card styling
+            // Apply modern card styling with proper HA variables
             card.style.cssText = `
-                border-radius: 16px;
-                box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9));
+                border-radius: var(--ha-card-border-radius, 16px);
+                box-shadow: var(--ha-card-box-shadow, 0 4px 24px rgba(0, 0, 0, 0.08));
+                border: var(--ha-card-border-width, 1px) solid var(--ha-card-border-color, var(--divider-color));
+                background: var(--ha-card-background, var(--card-background-color));
                 backdrop-filter: blur(20px);
                 transition: all 0.3s ease;
             `;
@@ -72,7 +72,7 @@ _createContent() {
     const content = document.createElement("DIV");
     content._rows = [];
 
-    // Apply modern styling to content
+    // Apply modern styling to content with proper HA variables
     content.style.cssText = `
         padding: 16px;
         gap: 12px;
@@ -87,12 +87,12 @@ _createContent() {
         row._template_value = entry.template || this._config.template;
         row.classList.add("card-content");
 
-        // Modern row styling
+        // Modern row styling with HA variables
         row.style.cssText = `
             padding: 16px;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.7);
-            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: var(--ha-card-border-radius, 12px);
+            background: var(--card-background-color);
+            border: var(--ha-card-border-width, 1px) solid var(--divider-color);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             backdrop-filter: blur(10px);
         `;
@@ -109,7 +109,7 @@ _createContent() {
             row.appendChild(content);
         } else {
             row.innerText = "Entity not found: " + entry.entity;
-            row.style.color = "#ff6b6b";
+            row.style.color = "var(--error-color, #ff6b6b)";
         }
 
         content._rows.push(row);
@@ -129,11 +129,12 @@ _updateContent() {
 
 _createCardRow(entity, name) {
     const content = document.createElement("DIV");
+    // Changed to vertical layout to prevent layout issues with long schedules
     content.style.cssText = `
         cursor: pointer;
         display: flex;
-        align-items: center;
-        gap: 16px;
+        flex-direction: column;
+        gap: 12px;
         padding: 4px;
         border-radius: 8px;
         transition: all 0.2s ease;
@@ -141,13 +142,21 @@ _createCardRow(entity, name) {
 
     // Add hover effect
     content.addEventListener('mouseenter', () => {
-        content.style.backgroundColor = 'rgba(0, 0, 0, 0.04)';
+        content.style.backgroundColor = 'var(--state-icon-hover-color, rgba(0, 0, 0, 0.04))';
         content.style.transform = 'translateY(-1px)';
     });
     content.addEventListener('mouseleave', () => {
         content.style.backgroundColor = 'transparent';
         content.style.transform = 'translateY(0)';
     });
+
+    // Top row with icon and name
+    const topRow = document.createElement("DIV");
+    topRow.style.cssText = `
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    `;
 
     const icon = document.createElement("state-badge");
     icon.style.cssText = `
@@ -158,7 +167,7 @@ _createCardRow(entity, name) {
     icon.stateObj = this._hass.states[entity];
     icon.stateColor = true;
     content._icon = icon;
-    content.appendChild(icon);
+    topRow.appendChild(icon);
 
     const name_element = document.createElement("P");
     name_element.innerText = name;
@@ -169,18 +178,23 @@ _createCardRow(entity, name) {
         margin: 0;
         flex: 1;
     `;
-    content.appendChild(name_element);
+    topRow.appendChild(name_element);
 
+    content.appendChild(topRow);
+
+    // Schedule display below name
     const value_element = document.createElement("P");
     value_element.style.cssText = `
-        margin: 0;
+        margin: 0 0 0 calc(40px + 16px);
         font-size: 14px;
         color: var(--secondary-text-color);
         font-weight: 400;
         padding: 8px 12px;
-        background: rgba(var(--rgb-primary-color), 0.1);
+        background: var(--state-active-color, rgba(var(--rgb-primary-color), 0.1));
         border-radius: 20px;
-        border: 1px solid rgba(var(--rgb-primary-color), 0.2);
+        border: 1px solid var(--state-active-color, rgba(var(--rgb-primary-color), 0.2));
+        display: inline-block;
+        max-width: fit-content;
     `;
     content._value_element = value_element;
     content.appendChild(value_element);
@@ -260,12 +274,35 @@ _createDialog() {
     this._dialog.heading = this._createDialogHeader();
     this._dialog.open = false;
 
-    // Modern dialog styling with larger size
+    // Responsive dialog styling
     this._dialog.style.cssText = `
-        --mdc-dialog-min-width: 500px;
-        --mdc-dialog-max-width: 80vw;
-        --mdc-dialog-max-height: 80vh;
+        --mdc-dialog-min-width: min(500px, 90vw);
+        --mdc-dialog-max-width: min(600px, 95vw);
+        --mdc-dialog-max-height: 90vh;
+        --dialog-backdrop-filter: blur(10px);
+        --dialog-background-color: var(--card-background-color);
+        --mdc-theme-surface: var(--card-background-color);
     `;
+
+    // Add media query styles directly to the dialog
+    const style = document.createElement("style");
+    style.textContent = `
+        @media (max-width: 768px) {
+            ha-dialog {
+                --mdc-dialog-min-width: 95vw !important;
+                --mdc-dialog-max-width: 95vw !important;
+                --mdc-dialog-max-height: 85vh !important;
+            }
+        }
+        @media (max-width: 480px) {
+            ha-dialog {
+                --mdc-dialog-min-width: 98vw !important;
+                --mdc-dialog-max-width: 98vw !important;
+                --mdc-dialog-max-height: 90vh !important;
+            }
+        }
+    `;
+    document.head.appendChild(style);
 
     const plus = document.createElement("DIV");
     plus.style.cssText = `
@@ -274,11 +311,11 @@ _createDialog() {
         align-items: center;
         gap: 8px;
         padding: 16px;
-        background: rgba(var(--rgb-primary-color), 0.1);
+        background: var(--state-active-color, rgba(var(--rgb-primary-color), 0.1));
         border-radius: 12px;
         cursor: pointer;
         transition: all 0.2s ease;
-        border: 2px dashed rgba(var(--rgb-primary-color), 0.3);
+        border: 2px dashed var(--primary-color, rgba(var(--rgb-primary-color), 0.3));
         margin: 16px 0;
     `;
 
@@ -293,6 +330,10 @@ _createDialog() {
 
     const icon = document.createElement("ha-icon");
     icon.icon = "mdi:plus";
+    icon.style.cssText = `
+        color: var(--primary-color);
+        --mdc-icon-size: 24px;
+    `;
     button.appendChild(icon);
 
     const text = document.createElement("P");
@@ -306,12 +347,12 @@ _createDialog() {
     plus.appendChild(text);
 
     plus.addEventListener('mouseenter', () => {
-        plus.style.background = 'rgba(var(--rgb-primary-color), 0.15)';
+        plus.style.background = 'var(--state-hover-background-color, rgba(var(--rgb-primary-color), 0.15))';
         plus.style.transform = 'translateY(-2px)';
-        plus.style.boxShadow = '0 4px 12px rgba(var(--rgb-primary-color), 0.2)';
+        plus.style.boxShadow = '0 4px 12px var(--state-active-color, rgba(var(--rgb-primary-color), 0.2))';
     });
     plus.addEventListener('mouseleave', () => {
-        plus.style.background = 'rgba(var(--rgb-primary-color), 0.1)';
+        plus.style.background = 'var(--state-active-color, rgba(var(--rgb-primary-color), 0.1))';
         plus.style.transform = 'translateY(0)';
         plus.style.boxShadow = 'none';
     });
@@ -331,12 +372,12 @@ _createDialog() {
     const message = document.createElement("P");
     message.style.cssText = `
         display: flex;
-        color: #ff6b6b;
+        color: var(--error-color, #ff6b6b);
         margin: 16px 0;
         padding: 12px;
-        background: rgba(255, 107, 107, 0.1);
+        background: var(--error-state-color, rgba(255, 107, 107, 0.1));
         border-radius: 8px;
-        border: 1px solid rgba(255, 107, 107, 0.2);
+        border: 1px solid var(--error-color, rgba(255, 107, 107, 0.2));
         font-weight: 500;
     `;
     message.innerText = "";
@@ -349,10 +390,12 @@ _createDialogRows() {
     // Create container for better spacing
     const container = document.createElement("DIV");
     container.style.cssText = `
-        padding: 24px;
-        gap: 20px;
+        padding: clamp(16px, 4vw, 24px);
+        gap: clamp(16px, 3vw, 20px);
         display: flex;
         flex-direction: column;
+        max-height: 70vh;
+        overflow-y: auto;
     `;
 
     this._dialog._schedule.forEach((range, index) => {
@@ -371,7 +414,7 @@ _createDialogHeader() {
         display: flex;
         gap: 16px;
         align-items: center;
-        padding: 24px 24px 0 24px;
+        padding: clamp(16px, 4vw, 24px) clamp(16px, 4vw, 24px) 0 clamp(16px, 4vw, 24px);
     `;
 
     const close = document.createElement("ha-icon");
@@ -382,9 +425,10 @@ _createDialogHeader() {
         border-radius: 50%;
         transition: all 0.2s ease;
         --mdc-icon-size: 24px;
+        color: var(--primary-text-color);
     `;
     close.addEventListener('mouseenter', () => {
-        close.style.backgroundColor = 'rgba(0, 0, 0, 0.1)';
+        close.style.backgroundColor = 'var(--state-icon-hover-color, rgba(0, 0, 0, 0.1))';
     });
     close.addEventListener('mouseleave', () => {
         close.style.backgroundColor = 'transparent';
@@ -397,7 +441,7 @@ _createDialogHeader() {
     const title = document.createElement("P");
     title.style.cssText = `
         margin: 0;
-        font-size: 20px;
+        font-size: clamp(18px, 4vw, 20px);
         font-weight: 600;
         color: var(--primary-text-color);
         flex: 1;
@@ -413,9 +457,10 @@ _createDialogHeader() {
         border-radius: 50%;
         transition: all 0.2s ease;
         --mdc-icon-size: 24px;
+        color: var(--primary-text-color);
     `;
     more_info.addEventListener('mouseenter', () => {
-        more_info.style.backgroundColor = 'rgba(0, 0, 0, 0.1)';
+        more_info.style.backgroundColor = 'var(--state-icon-hover-color, rgba(0, 0, 0, 0.1))';
     });
     more_info.addEventListener('mouseleave', () => {
         more_info.style.backgroundColor = 'transparent';
@@ -440,41 +485,68 @@ _createDialogRow(range, index) {
     row.style.cssText = `
         color: var(--primary-text-color);
         display: flex;
-        gap: 16px;
+        flex-wrap: wrap;
+        gap: clamp(12px, 3vw, 16px);
         align-items: center;
-        padding: 20px;
-        background: rgba(255, 255, 255, 0.7);
+        padding: clamp(16px, 4vw, 20px);
+        background: var(--card-background-color);
         border-radius: 16px;
-        border: 1px solid rgba(0, 0, 0, 0.06);
+        border: 1px solid var(--divider-color);
         transition: all 0.3s ease;
     `;
+
+    // Responsive layout for mobile
+    const mobileMediaQuery = window.matchMedia('(max-width: 768px)');
+    if (mobileMediaQuery.matches) {
+        row.style.flexDirection = 'column';
+        row.style.alignItems = 'stretch';
+    }
 
     // Add hover effect to rows
     row.addEventListener('mouseenter', () => {
         row.style.transform = 'translateY(-2px)';
-        row.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.1)';
+        row.style.boxShadow = '0 8px 24px var(--shadow-elevation-2x_-_box-shadow, rgba(0, 0, 0, 0.1))';
     });
     row.addEventListener('mouseleave', () => {
         row.style.transform = 'translateY(0)';
         row.style.boxShadow = 'none';
     });
 
-    this._createTimeInput(range, "from", row);
+    // Time inputs container for mobile layout
+    const timeContainer = document.createElement("DIV");
+    timeContainer.style.cssText = `
+        display: flex;
+        align-items: center;
+        gap: clamp(8px, 2vw, 16px);
+        flex: 1;
+        min-width: 0;
+    `;
+
+    this._createTimeInput(range, "from", timeContainer);
 
     const arrow = document.createElement("ha-icon");
     arrow.icon = "mdi:arrow-left-right";
     arrow.style.cssText = `
         color: var(--primary-color);
         --mdc-icon-size: 20px;
+        flex: none;
     `;
-    row.appendChild(arrow);
+    timeContainer.appendChild(arrow);
 
-    this._createTimeInput(range, "to", row);
+    this._createTimeInput(range, "to", timeContainer);
+    row.appendChild(timeContainer);
+
+    // Controls container
+    const controlsContainer = document.createElement("DIV");
+    controlsContainer.style.cssText = `
+        display: flex;
+        align-items: center;
+        gap: clamp(8px, 2vw, 16px);
+        flex: none;
+    `;
 
     const toggle = document.createElement("ha-switch");
     toggle.style.cssText = `
-        margin-left: auto;
-        padding-left: 16px;
         --mdc-switch-selected-track-color: var(--primary-color);
         --mdc-switch-selected-handle-color: var(--primary-color);
     `;
@@ -483,20 +555,20 @@ _createDialogRow(range, index) {
         range.disabled = !range.disabled;
         this._saveBackendEntity();
     });
-    row.appendChild(toggle);
+    controlsContainer.appendChild(toggle);
 
     const remove = document.createElement("ha-icon");
     remove.icon = "mdi:delete-outline";
     remove.style.cssText = `
         cursor: pointer;
-        color: #ff6b6b;
+        color: var(--error-color, #ff6b6b);
         padding: 8px;
         border-radius: 50%;
         transition: all 0.2s ease;
         --mdc-icon-size: 20px;
     `;
     remove.addEventListener('mouseenter', () => {
-        remove.style.backgroundColor = 'rgba(255, 107, 107, 0.1)';
+        remove.style.backgroundColor = 'var(--error-state-color, rgba(255, 107, 107, 0.1))';
     });
     remove.addEventListener('mouseleave', () => {
         remove.style.backgroundColor = 'transparent';
@@ -508,28 +580,32 @@ _createDialogRow(range, index) {
         this._createDialogRows();
         this._saveBackendEntity();
     };
-    row.appendChild(remove);
+    controlsContainer.appendChild(remove);
+
+    row.appendChild(controlsContainer);
 
     return row;
 }
 
 // Simplified time input without sunrise/sunset functionality
-_createTimeInput(range, type, row) {
+_createTimeInput(range, type, container) {
     const time_input = document.createElement("INPUT");
     time_input.type = "time";
 
-    // Improved styling for time inputs
+    // Improved styling for time inputs with responsive design
     time_input.style.cssText = `
-        padding: 12px 16px;
-        border: 2px solid rgba(var(--rgb-primary-color), 0.2);
+        padding: clamp(8px, 2vw, 12px) clamp(12px, 3vw, 16px);
+        border: 2px solid var(--input-outlined-idle-border-color, var(--divider-color));
         border-radius: 12px;
-        background: rgba(255, 255, 255, 0.9);
-        font-size: 16px;
+        background: var(--input-fill-color, var(--card-background-color));
+        font-size: clamp(14px, 3.5vw, 16px);
         font-weight: 500;
         color: var(--primary-text-color);
         transition: all 0.2s ease;
-        min-width: 140px;
+        min-width: clamp(120px, 25vw, 140px);
         cursor: pointer;
+        flex: 1;
+        max-width: 160px;
     `;
 
     // Set initial value if exists
@@ -538,13 +614,13 @@ _createTimeInput(range, type, row) {
         time_input.value = time[0] + ":" + time[1];
     }
 
-    // Add focus effects
+    // Add focus effects with proper HA variables
     time_input.addEventListener('focus', () => {
-        time_input.style.borderColor = 'var(--primary-color)';
-        time_input.style.boxShadow = '0 0 0 3px rgba(var(--rgb-primary-color), 0.1)';
+        time_input.style.borderColor = 'var(--input-outlined-hover-border-color, var(--primary-color))';
+        time_input.style.boxShadow = '0 0 0 3px var(--state-focus-color, rgba(var(--rgb-primary-color), 0.1))';
     });
     time_input.addEventListener('blur', () => {
-        time_input.style.borderColor = 'rgba(var(--rgb-primary-color), 0.2)';
+        time_input.style.borderColor = 'var(--input-outlined-idle-border-color, var(--divider-color))';
         time_input.style.boxShadow = 'none';
     });
 
@@ -563,11 +639,11 @@ _createTimeInput(range, type, row) {
         }
     };
 
-    row.appendChild(time_input);
+    container.appendChild(time_input);
 }
 
 _getInputTimeWidth() {
-    // Fixed width for consistent layout
+    // Fixed width for consistent layout - will be handled by CSS
     this._input_time_width = 140;
 }
 
@@ -613,7 +689,6 @@ window.customCards.push({
     documentationURL: "https://github.com/pini72/lovelace-daily-schedule-card",
 });
 
-
 // Editor Component for Daily Schedule Card
 class DailyScheduleCardEditor extends HTMLElement {
     constructor() {
@@ -648,9 +723,9 @@ class DailyScheduleCardEditor extends HTMLElement {
             <style>
                 .card-config {
                     padding: 16px;
-                    background: rgba(255, 255, 255, 0.95);
-                    border-radius: 12px;
-                    border: 1px solid rgba(0, 0, 0, 0.06);
+                    background: var(--card-background-color);
+                    border-radius: var(--ha-card-border-radius, 12px);
+                    border: var(--ha-card-border-width, 1px) solid var(--divider-color);
                     margin-bottom: 16px;
                     backdrop-filter: blur(10px);
                 }
@@ -666,15 +741,15 @@ class DailyScheduleCardEditor extends HTMLElement {
                     align-items: center;
                     gap: 12px;
                     padding: 16px;
-                    background: rgba(255, 255, 255, 0.7);
-                    border-radius: 12px;
-                    border: 1px solid rgba(0, 0, 0, 0.06);
+                    background: var(--card-background-color);
+                    border-radius: var(--ha-card-border-radius, 12px);
+                    border: var(--ha-card-border-width, 1px) solid var(--divider-color);
                     transition: all 0.2s ease;
                 }
 
                 .entity:hover {
                     transform: translateY(-2px);
-                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+                    box-shadow: var(--ha-card-box-shadow, 0 8px 24px rgba(0, 0, 0, 0.1));
                 }
 
                 .handle {
@@ -682,24 +757,25 @@ class DailyScheduleCardEditor extends HTMLElement {
                     padding: 8px;
                     border-radius: 8px;
                     transition: all 0.2s ease;
+                    color: var(--secondary-text-color);
                 }
 
                 .handle:hover {
-                    background: rgba(0, 0, 0, 0.05);
+                    background: var(--state-icon-hover-color, rgba(0, 0, 0, 0.05));
                 }
 
                 .add-entity {
                     margin-top: 16px;
                     padding: 16px;
-                    border: 2px dashed rgba(var(--rgb-primary-color), 0.3);
-                    border-radius: 12px;
-                    background: rgba(var(--rgb-primary-color), 0.05);
+                    border: 2px dashed var(--primary-color, rgba(var(--rgb-primary-color), 0.3));
+                    border-radius: var(--ha-card-border-radius, 12px);
+                    background: var(--state-active-color, rgba(var(--rgb-primary-color), 0.05));
                     transition: all 0.2s ease;
                 }
 
                 .add-entity:hover {
-                    background: rgba(var(--rgb-primary-color), 0.1);
-                    border-color: rgba(var(--rgb-primary-color), 0.5);
+                    background: var(--state-hover-background-color, rgba(var(--rgb-primary-color), 0.1));
+                    border-color: var(--primary-color, rgba(var(--rgb-primary-color), 0.5));
                 }
 
                 h3 {
@@ -711,7 +787,7 @@ class DailyScheduleCardEditor extends HTMLElement {
 
                 ha-textfield {
                     width: 100%;
-                    --mdc-text-field-fill-color: rgba(255, 255, 255, 0.9);
+                    --mdc-text-field-fill-color: var(--input-fill-color, var(--card-background-color));
                     --mdc-shape-small: 12px;
                 }
             </style>
