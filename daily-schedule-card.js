@@ -91,7 +91,7 @@ class DailyScheduleCard extends HTMLElement {
             row.style.cssText = `
             padding: 16px;
             border-radius: 12px;
-            background: rgba(255, 255, 255, 0.7);
+            background: rgba(0, 0, 0, 0.1);
             border: 1px solid rgba(0, 0, 0, 0.06);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             backdrop-filter: blur(10px);
@@ -433,7 +433,7 @@ class DailyScheduleCard extends HTMLElement {
         gap: 16px;
         align-items: center;
         padding: 20px;
-        background: rgba(255, 255, 255, 0.7);
+        background: rgba(0, 0, 0, 0.2);
         border-radius: 16px;
         border: 1px solid rgba(0, 0, 0, 0.06);
         transition: all 0.3s ease;
