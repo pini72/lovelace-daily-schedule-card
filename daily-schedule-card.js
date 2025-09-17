@@ -182,17 +182,17 @@ _createCardRow(entity, name) {
 
     content.appendChild(topRow);
 
-    // Schedule display below name
+    // Schedule display below name - FIXED COLORS
     const value_element = document.createElement("P");
     value_element.style.cssText = `
         margin: 0 0 0 calc(40px + 16px);
         font-size: 14px;
-        color: var(--secondary-text-color);
-        font-weight: 400;
+        color: var(--primary-text-color);
+        font-weight: 500;
         padding: 8px 12px;
-        background: var(--state-active-color, rgba(var(--rgb-primary-color), 0.1));
-        border-radius: 20px;
-        border: 1px solid var(--state-active-color, rgba(var(--rgb-primary-color), 0.2));
+        background: var(--state-active-color, rgba(var(--rgb-primary-color), 0.08));
+        border-radius: 12px;
+        border: 1px solid var(--divider-color);
         display: inline-block;
         max-width: fit-content;
     `;
@@ -387,10 +387,11 @@ _createDialog() {
 _createDialogRows() {
     this._dialog.innerHTML = "";
 
-    // Create container for better spacing
+    // Create container for better spacing - FIXED BOTTOM PADDING
     const container = document.createElement("DIV");
     container.style.cssText = `
         padding: clamp(16px, 4vw, 24px);
+        padding-bottom: clamp(32px, 6vw, 40px);
         gap: clamp(16px, 3vw, 20px);
         display: flex;
         flex-direction: column;
@@ -489,6 +490,7 @@ _createDialogRow(range, index) {
         gap: clamp(12px, 3vw, 16px);
         align-items: center;
         padding: clamp(16px, 4vw, 20px);
+        margin-block: clamp(6px, 1.2vw, 10px);
         background: var(--card-background-color);
         border-radius: 16px;
         border: 1px solid var(--divider-color);
@@ -512,10 +514,11 @@ _createDialogRow(range, index) {
         row.style.boxShadow = 'none';
     });
 
-    // Time inputs container for mobile layout
+    // Time inputs container for mobile layout - FIXED WITH FLEX-WRAP
     const timeContainer = document.createElement("DIV");
     timeContainer.style.cssText = `
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
         gap: clamp(8px, 2vw, 16px);
         flex: 1;
@@ -528,7 +531,7 @@ _createDialogRow(range, index) {
     arrow.icon = "mdi:arrow-left-right";
     arrow.style.cssText = `
         color: var(--primary-color);
-        --mdc-icon-size: 20px;
+        --mdc-icon-size: clamp(16px, 4.5vw, 20px);
         flex: none;
     `;
     timeContainer.appendChild(arrow);
