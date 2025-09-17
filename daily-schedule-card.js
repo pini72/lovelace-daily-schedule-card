@@ -203,6 +203,7 @@ _createCardRow(entity, name) {
         this._dialog._entity = entity;
         this._dialog._title.innerText = name;
         this._dialog._message.innerText = "";
+        this._dialog._message.style.display = "none"; // Hide initially
         this._dialog._plus._button.disabled = false;
         this._dialog._schedule = [...this._getStateSchedule(entity)];
         this._createDialogRows();
@@ -304,26 +305,28 @@ _createDialog() {
     `;
     document.head.appendChild(style);
 
+    // FIXED: Yellow button with black text permanently
     const plus = document.createElement("DIV");
     plus.style.cssText = `
-        color: var(--primary-color);
+        color: #000000;
         display: flex;
         align-items: center;
         gap: 8px;
         padding: 16px;
-        background: var(--state-active-color, rgba(var(--rgb-primary-color), 0.1));
+        background: #ffeb3b;
         border-radius: 12px;
         cursor: pointer;
         transition: all 0.2s ease;
-        border: 2px dashed var(--primary-color, rgba(var(--rgb-primary-color), 0.3));
+        border: 2px solid #fbc02d;
         margin: 16px 0;
+        box-shadow: 0 2px 8px rgba(255, 235, 59, 0.3);
     `;
 
     const button = document.createElement("mwc-icon-button");
     button.style.cssText = `
         --mdc-icon-button-size: 40px;
         --mdc-icon-size: 24px;
-        color: var(--primary-color);
+        color: #000000;
     `;
     plus._button = button;
     plus.appendChild(button);
@@ -331,7 +334,7 @@ _createDialog() {
     const icon = document.createElement("ha-icon");
     icon.icon = "mdi:plus";
     icon.style.cssText = `
-        color: var(--primary-color);
+        color: #000000;
         --mdc-icon-size: 24px;
     `;
     button.appendChild(icon);
@@ -340,21 +343,22 @@ _createDialog() {
     text.innerText = "הוסף טווח זמן";
     text.style.cssText = `
         margin: 0;
-        font-weight: 500;
+        font-weight: 600;
         font-size: 16px;
-        color: var(--primary-color);
+        color: #000000;
     `;
     plus.appendChild(text);
 
+    // Hover effect for yellow button
     plus.addEventListener('mouseenter', () => {
-        plus.style.background = 'var(--state-hover-background-color, rgba(var(--rgb-primary-color), 0.15))';
+        plus.style.background = '#fdd835';
         plus.style.transform = 'translateY(-2px)';
-        plus.style.boxShadow = '0 4px 12px var(--state-active-color, rgba(var(--rgb-primary-color), 0.2))';
+        plus.style.boxShadow = '0 4px 16px rgba(255, 235, 59, 0.4)';
     });
     plus.addEventListener('mouseleave', () => {
-        plus.style.background = 'var(--state-active-color, rgba(var(--rgb-primary-color), 0.1))';
+        plus.style.background = '#ffeb3b';
         plus.style.transform = 'translateY(0)';
-        plus.style.boxShadow = 'none';
+        plus.style.boxShadow = '0 2px 8px rgba(255, 235, 59, 0.3)';
     });
 
     plus.onclick = () => {
@@ -369,9 +373,10 @@ _createDialog() {
 
     this._dialog._plus = plus;
 
+    // FIXED: Hide error message initially
     const message = document.createElement("P");
     message.style.cssText = `
-        display: flex;
+        display: none;
         color: var(--error-color, #ff6b6b);
         margin: 16px 0;
         padding: 12px;
@@ -525,18 +530,12 @@ _createDialogRow(range, index) {
         min-width: 0;
     `;
 
-    this._createTimeInput(range, "from", timeContainer);
+    // Start time with icon
+    this._createTimeInput(range, "from", timeContainer, "start");
 
-    const arrow = document.createElement("ha-icon");
-    arrow.icon = "mdi:arrow-left-right";
-    arrow.style.cssText = `
-        color: var(--primary-color);
-        --mdc-icon-size: clamp(16px, 4.5vw, 20px);
-        flex: none;
-    `;
-    timeContainer.appendChild(arrow);
+    // End time with icon (removed arrow)
+    this._createTimeInput(range, "to", timeContainer, "end");
 
-    this._createTimeInput(range, "to", timeContainer);
     row.appendChild(timeContainer);
 
     // Controls container
@@ -590,8 +589,33 @@ _createDialogRow(range, index) {
     return row;
 }
 
-// Simplified time input without sunrise/sunset functionality
-_createTimeInput(range, type, container) {
+// FIXED: Added icons for start/end times, removed arrow
+_createTimeInput(range, type, container, iconType) {
+    // Create input container with icon
+    const inputContainer = document.createElement("DIV");
+    inputContainer.style.cssText = `
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+        min-width: clamp(140px, 28vw, 180px);
+        max-width: 200px;
+    `;
+
+    // Add icon based on type
+    const icon = document.createElement("ha-icon");
+    if (iconType === "start") {
+        icon.icon = "mdi:play-circle-outline";
+    } else {
+        icon.icon = "mdi:stop-circle-outline";
+    }
+    icon.style.cssText = `
+        color: var(--primary-color);
+        --mdc-icon-size: 20px;
+        flex: none;
+    `;
+    inputContainer.appendChild(icon);
+
     const time_input = document.createElement("INPUT");
     time_input.type = "time";
 
@@ -605,10 +629,9 @@ _createTimeInput(range, type, container) {
         font-weight: 500;
         color: var(--primary-text-color);
         transition: all 0.2s ease;
-        min-width: clamp(120px, 25vw, 140px);
         cursor: pointer;
         flex: 1;
-        max-width: 160px;
+        min-width: 0;
     `;
 
     // Set initial value if exists
@@ -642,7 +665,8 @@ _createTimeInput(range, type, container) {
         }
     };
 
-    container.appendChild(time_input);
+    inputContainer.appendChild(time_input);
+    container.appendChild(inputContainer);
 }
 
 _getInputTimeWidth() {
@@ -655,8 +679,9 @@ _saveBackendEntity() {
 
     for (const range of this._dialog._schedule) {
         if (range.from === null || range.to === null) {
-            if (this._dialog._message.innerText !== "Missing field(s).") {
+            if (this._dialog._message.innerText !== "שדות חסרים.") {
                 this._dialog._message.innerText = "שדות חסרים.";
+                this._dialog._message.style.display = "flex"; // Show error
             }
             return;
         }
@@ -670,12 +695,14 @@ _saveBackendEntity() {
         .then(() => {
             if (this._dialog._message.innerText.length > 0) {
                 this._dialog._message.innerText = "";
+                this._dialog._message.style.display = "none"; // Hide error
             }
             this._dialog._plus._button.disabled = false;
         })
         .catch((error) => {
             if (this._dialog._message.innerText !== error.message) {
                 this._dialog._message.innerText = error.message;
+                this._dialog._message.style.display = "flex"; // Show error
             }
             return Promise.reject(error);
         });
