@@ -87,14 +87,13 @@ class DailyScheduleCard extends HTMLElement {
             row._template_value = entry.template || this._config.template;
             row.classList.add("card-content");
 
-            // Modern row styling
+            // Dynamic row styling
             row.style.cssText = `
             padding: 16px;
             border-radius: 12px;
-            background: rgba(0, 0, 0, 0.1);
+            background: var(--card-background-color);
             border: 1px solid rgba(0, 0, 0, 0.06);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            backdrop-filter: blur(10px);
         `;
 
             if (this._hass.states[entity]) {
@@ -433,7 +432,7 @@ class DailyScheduleCard extends HTMLElement {
         gap: 16px;
         align-items: center;
         padding: 20px;
-        background: rgba(0, 0, 0, 0.2);
+        background: var(--card-background-color);
         border-radius: 16px;
         border: 1px solid rgba(0, 0, 0, 0.06);
         transition: all 0.3s ease;
@@ -452,7 +451,7 @@ class DailyScheduleCard extends HTMLElement {
         const start_icon = document.createElement("ha-icon");
         start_icon.icon = "mdi:play-circle-outline";
         start_icon.style.cssText = `
-        color: var(--primary-color);
+        color: var(--primary-text-color);
         --mdc-icon-size: 24px;
     `;
         row.appendChild(start_icon);
@@ -462,7 +461,7 @@ class DailyScheduleCard extends HTMLElement {
         const end_icon = document.createElement("ha-icon");
         end_icon.icon = "mdi:stop-circle-outline";
         end_icon.style.cssText = `
-        color: var(--primary-color);
+        color: var(--primary-text-color);
         --mdc-icon-size: 24px;
     `;
         row.appendChild(end_icon);
@@ -521,7 +520,7 @@ class DailyScheduleCard extends HTMLElement {
         padding: 12px 16px;
         border: 2px solid rgba(var(--rgb-primary-color), 0.2);
         border-radius: 12px;
-        background: rgba(255, 255, 255, 0.9);
+        background: var(--card-background-color);
         font-size: 16px;
         font-weight: 500;
         color: var(--primary-text-color);
